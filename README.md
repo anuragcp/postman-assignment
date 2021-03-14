@@ -12,8 +12,9 @@ Containerisation is not successful yet due to
 
 #### Execution on local device
 1. Install dependencies using pip [Python 3.8 recommended]
-2. run ***uvicorn main:app --reload***
-3. Open **http://127.0.0.1:8000**
+2. move to app directory
+3. run ***uvicorn main:app --reload***
+4. Open **http://127.0.0.1:8000**
 
 
 #### Schema
@@ -38,4 +39,22 @@ table name - postman
 
 > DDL command are present in the **app/models/product.py** with ***Product class***
 > 
+
+#### What is done from “Points to achieve”.
+
+1. For Non blocking Ingestion created WebUI using FastAPI<img width="1514" alt="Screenshot 2021-03-14 at 9 49 00 PM" src="https://user-images.githubusercontent.com/19818454/111075733-662a8b80-850f-11eb-9928-6b24100ab563.png">
+
+2. Stores Uploaded files in temp directory and read csv as different chunk (max 1024 records) and process that.<img width="1480" alt="Screenshot 2021-03-14 at 9 49 11 PM" src="https://user-images.githubusercontent.com/19818454/111075821-c0c3e780-850f-11eb-9155-4ebdd44e2748.png">
+3. Transform each record in a chunk by adding new column partition_code with a custom string hasing class
+
+#### What is not done from “Points to achieve”?
+
+1. file is to be processed in 2 mins [ On the present implementation time complexity of ingestion module is O(n^2) since pandas chunk processing, if memory is not concerned it can be implemented in O(n) time complexity. Try to implement with PySpark Jobs, I have much experience in PySpark, but I will 💪]
+2. An aggregated table on above rows with `name` and `no. of products` as the columns; [all the healper function are implemeted - airflow docker implementation is pending] Since: airflow offcial docker image has some bug with postgress integration (source: opened in github official repository)
+
+> Dag function are implemented, but stuck on error with dependency [PythonOperator]
+> 
+
+[ I can improve time complexity (with spark) and Orchestration with airflow if allowed 3 more days. This repository was created during last 2 days (Starurday and Sunday) #_IAmAQuickLearner_🏋️‍♂️ ]
+
 
