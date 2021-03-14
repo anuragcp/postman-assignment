@@ -45,7 +45,14 @@ table name - postman
 1. For Non blocking Ingestion created WebUI using FastAPI<img width="1514" alt="Screenshot 2021-03-14 at 9 49 00 PM" src="https://user-images.githubusercontent.com/19818454/111075733-662a8b80-850f-11eb-9928-6b24100ab563.png">
 
 2. Stores Uploaded files in temp directory and read csv as different chunk (max 1024 records) and process that.<img width="1480" alt="Screenshot 2021-03-14 at 9 49 11 PM" src="https://user-images.githubusercontent.com/19818454/111075821-c0c3e780-850f-11eb-9155-4ebdd44e2748.png">
-3. Transform each record in a chunk by adding new column partition_code with a custom string hasing class
+3. Transform each record in a chunk by adding new column partition_code with a custom string hasing class. <img width="684" alt="Screenshot 2021-03-14 at 10 00 16 PM" src="https://user-images.githubusercontent.com/19818454/111076048-ad654c00-8510-11eb-8f49-f636e2edb3a7.png">
+4. When ever try to ingest product data with product existing sku - system updates with other data (large number of partition table really speed up the updation process.
+5. All the products are saving in single table with varible partition. ***total count - 466693***
+    <img width="1680" alt="Screenshot 2021-03-14 at 10 06 04 PM" src="https://user-images.githubusercontent.com/19818454/111076229-7ba0b500-8511-11eb-8083-fd984fe1fc40.png">
+
+6. Aggrigated Table ( this reports the over all product table with a airflow pipeline )  ***total count - 212751***
+  <img width="373" alt="Screenshot 2021-03-14 at 10 08 48 PM" src="https://user-images.githubusercontent.com/19818454/111076317-dcc88880-8511-11eb-9835-5bbfd6239f1d.png">
+
 
 #### What is not done from “Points to achieve”?
 
