@@ -1,0 +1,53 @@
+version: '3.8'
+services:
+    postgres:
+        image: postgres:12
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_DB=airflow
+            - AIRFLOW__WEBSERVER__RBAC=true
+        ports:
+            - "6006:5432"
+        logging:
+            options:
+                max-size: 10m
+                max-file: "3"
+    webserver:
+        image: puckel/docker-airflow:1.10.9
+        restart: always
+        depends_on:
+            - postgres
+        environment:
+            - LOAD_EX=n
+            - EXECUTOR=Local
+        logging:
+            options:
+                max-size: 10m
+                max-file: "3"
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+            # - ./plugins:/usr/local/airflow/plugins
+        ports:
+            - "8080:8080"
+        command: webserver
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+    server:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        volumes:
+            - ./:/app/
+        command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+        restart: always
+        env_file:
+            - ./server.env
+        ports:
+            - "8000:8000"
+        depends_on:
+          - postgres
+          - webserver

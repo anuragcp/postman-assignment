@@ -1,0 +1,2 @@
+airflow initdb
+airflow webserver
