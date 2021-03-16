@@ -3,10 +3,7 @@ import sys
 sys.path.insert(1, '../')
 import models
 import psycopg2
-
-
-
-
+import numpy as np
 
 class Product(object):
     """
@@ -144,15 +141,14 @@ class Product(object):
                                 INSERT INTO product VALUES ('{row[0]}', '{row[1]}', '{row[2]}', {row[3]})
                 """)
                 self.session.commit()
-                # print("INFO: [PRODUCT] - Inserted")
             except (psycopg2.errors.UndefinedTable) as e:
-                # print("ERROR: [PRODUCT] - Table does not Exist")
+                print("ERROR: [PRODUCT] - Table does not Exist")
                 self.session.rollback()
             except (psycopg2.errors.UndefinedColumn,) as e :
-                # print("ERROR: [PRODUCT] - Undefined Column")
+                print("ERROR: [PRODUCT] - Undefined Column")
                 self.session.rollback()
             except (psycopg2.errors.CheckViolation,) as e :
-                # print("ERROR: [PRODUCT] - Violation 'create partition'")
+                print("ERROR: [PRODUCT] - Violation 'create partition'")
                 self.session.rollback()
             except (psycopg2.errors.UniqueViolation,) as e:
                 self.session.rollback()

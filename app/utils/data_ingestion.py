@@ -7,7 +7,7 @@ import shutil
 from tempfile import NamedTemporaryFile
 from fastapi import UploadFile
 import pandas as pd
-from .hashing import PartitionCode
+from utils import hashing
 import os
 from timeit import default_timer as timer
 
@@ -18,8 +18,11 @@ sys.path.append(parentdir)
 
 from models import product
 
-partition_factor = os.environ.get('PARTITION_FACTOR')
-partitionObj = PartitionCode(partition_factor)
+try:
+    partition_factor = os.environ.get('PARTITION_FACTOR')
+except Exception as e:
+    partition_factor = None
+partitionObj = hashing.PartitionCode(partition_factor)
 partition_count = partitionObj.get_partition_count()
 
 
@@ -36,19 +39,36 @@ partition_count = partitionObj.get_partition_count()
 def ingest_data(file_path = None):
     if not file_path:
         return False
+    print("Inside ingest_data")
 
     obj = product.Product()
 
     start = timer()
-    for chunk in pd.read_csv(file_path, chunksize=1024, header=0):
-        chunk['partition_code'] = chunk['sku'].apply(partitionObj.get_partition_code)
-        try:
-            for i in range(len(chunk.index)):
-                obj.insert_one(chunk.iloc[i].to_list())
-        except Exception as e:
-            print(e)
-            return False
-
+    # for chunk in pd.read_csv(file_path, chunksize=1024, header=0):
+    #     chunk['partition_code'] = chunk['sku'].apply(partitionObj.get_partition_code)
+    #     try:
+    #         for i in range(len(chunk.index)):
+    #             obj.insert_one(chunk.iloc[i].to_list())
+    #     except Exception as e:
+    #         print(e)
+    #         return False
+    dtype_args = {
+        'name': 'str',
+        'sku': 'str',
+        'description':'str'
+    }
+    dataFrame = pd.read_csv(file_path, dtype=dtype_args, index_col=False, header=0)
+    dataFrame = dataFrame.dropna()
+    dataFrame.drop_duplicates(keep='last', inplace = True)
+    idx = pd.Index(dataFrame['sku'])
+    dataFrame = dataFrame[idx.duplicated(keep='last') == False]
+    dataFrame['partition_code'] = dataFrame['sku'].apply(partitionObj.get_partition_code)
+    print(dataFrame[0:1][:])
+    print("Just before for loop")
+    for i in range(len(dataFrame.index)):
+        obj.insert_one(dataFrame.iloc[i].to_list())
+    # dataFrame.apply(obj.insert_one, axis=1, raw = True)
+    print("Just after loop")
     end = timer()
 
     print(f"[INFO] [INSERT_DATA] transform and ingestion took {end - start} seconds.")

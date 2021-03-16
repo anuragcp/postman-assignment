@@ -50,8 +50,10 @@ async def upload_file(file: UploadFile = File(...)):
     print(f"[INFO] [I/O OPS] took time {end - start} seconds.")
     # temp_file = _save_file_to_disk(file, path='temp', save_as='temp')
     start = timer()
+    print("Started Ingestion")
     ingestion_resp = data_ingestion.ingest_data(f'./temp/{filename}.csv')
-    start = timer()
+    print("Complete Ingestion")
+    end = timer()
     os.remove(f'./temp/{filename}.csv')
     if ingestion_resp:
         return {"status": "OK","message":f"Data Ingested with {end - start} seconds :)"}
