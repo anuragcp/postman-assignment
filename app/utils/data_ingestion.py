@@ -63,12 +63,10 @@ def ingest_data(file_path = None):
     idx = pd.Index(dataFrame['sku'])
     dataFrame = dataFrame[idx.duplicated(keep='last') == False]
     dataFrame['partition_code'] = dataFrame['sku'].apply(partitionObj.get_partition_code)
-    print(dataFrame[0:1][:])
-    print("Just before for loop")
     for i in range(len(dataFrame.index)):
         obj.insert_one(dataFrame.iloc[i].to_list())
     # dataFrame.apply(obj.insert_one, axis=1, raw = True)
-    print("Just after loop")
+
     end = timer()
 
     print(f"[INFO] [INSERT_DATA] transform and ingestion took {end - start} seconds.")

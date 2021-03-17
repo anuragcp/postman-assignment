@@ -54,7 +54,7 @@ class Product(object):
 
 
     def create_report_table(self):
-        print(self.session)
+        # print(self.session)
         with self.session.cursor() as cursor:
             try:
                 cursor.execute(self.reporting_table_query)
