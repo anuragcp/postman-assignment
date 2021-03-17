@@ -1,31 +1,69 @@
-from airflow import DAG
-from datetime import datetime, timedelta
-from airflow.operators.python_operator import PythonOperator
-import sys
+try:
+    from airflow import DAG
+    from datetime import datetime, timedelta
+    from airflow.operators.python_operator import PythonOperator
+    from airflow.operators.python import task
+    import psycopg2
+    print("All modules are imported") # prints in log
+except Exception as e:
+    print(f"ERROR: {e}")
 
 
-# declaring task
-import psycopg2
-
-def generate_report():
-    scheduler_query = """
+@task
+def generate_aggrigation():
+    aggrigation_query = """
                                 INSERT INTO product_report 
                                 SELECT name, count(*) FROM product
                                 GROUP BY name;
                             """
+    truncate_query = """
+                                TRUNCATE product_report;
+                            """
+    # accessing connection
     try:
-        with psycopg2.connect(user='postgres', password='postman', host='postgres', port='5432', database='postman') as connection:
-            with connection.cursor() as cursor:
-                try:
-                    cursor.execute(scheduler_query)
-                    connection.commit()
-                except Exception as e:
-                    connection.rollback()
+        connection = psycopg2.connect(user='postgres', password='postgres', host='localhost', port='5432', database='postman')
     except Exception as e:
         print(e)
+    instance = connection
 
-def task_file():
-    pass
+
+    print(instance)
+    with instance.cursor() as cursor:
+        try:
+            cursor.execute(truncate_query)
+            instance.commit()
+
+            try:
+                cursor.execute(aggrigation_query)
+                instance.commit()
+            except Exception as e:
+                print(f"ERROR: {e}")
+                instance.rollback()
+        except Exception as e:
+            print(f"ERROR: {e}")
+            instance.rollback()
+    
+    print("SUCCESS: Aggrigation table created :)")
+
+    try:
+        connection.close()
+        print("SUCCESS: Database connection closed")
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return False
+    return True
+
+@task
+def end_process(result):
+    if result:
+        print("Success") # logging
+    else:
+        print("Fail") #logging
+    # try:
+    #     connection.close()
+    #     print("SUCCESS: Database connection closed")
+    # except Exception as e:
+    #     print(f"ERROR: {e}")
 
 
 
@@ -34,25 +72,18 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2021, 3, 13),
-    'retries': 0,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=1)
 }
 
 
 # dag instance 
-dag = DAG(dag_id='postman_1', default_args=default_args, catchup=False, schedule_interval='@once')
+with DAG(
+        dag_id = "aggrigated_summary",
+        schedule_interval='*/2 * * * *',
+        default_args = default_args,
+        catchup = False
+    ) as dag:
 
-#  Task Instance
-reporter = PythonOperator(
-    task_id = 'report_products',
-    python_callable = generate_report(),
-    dag = dag,
-)
-
-end = PythonOperator(
-    task_id = 'end_task',
-    python_callable = task_file(),
-    dag = dag,
-)
-
-
-reporter >> end
+    result = generate_aggrigation()
+    end_process(result)
