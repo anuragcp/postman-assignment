@@ -9,6 +9,10 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
 
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  </script>
+
   <title>Upload File</title>
 </head>
 
@@ -42,7 +46,6 @@
           </button>
 
           <button type="button" id="cancel_btn" class="btn btn-secondary d-none">Cancel upload</button>
-
         </div>
 
         <div id="progress_wrapper" class="d-none">
@@ -57,8 +60,54 @@
 
       </div>
     </div>
-  </div>
+    <div style="margin-bottom:20px;">
+      <button onclick="fetchReport();" id="report_btn" class="btn btn-warning">Report</button>
+    </div>
+    <div id="empty_result" class="d-none">No data available</div>
 
+    <div id="resultDiv" class="d-none">
+      <div id="totalData">Showing 1 to 50 of 369</div>
+      <table class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+        <thead>
+          <tr>
+            <th class="th-sm">Name
+
+            </th>
+            <th class="th-sm">Number of Products
+          </tr>
+        </thead>
+        <tbody id="resultTable">
+
+        </tbody>
+        <!--          <tfoot>
+            <tr>
+              <th>Name
+              </th>
+              <th>Number of Products
+              </th>
+            </tr>
+          </tfoot>-->
+      </table>
+      <ul class="pagination" style="margin-left:38%;">
+
+      </ul>
+    </div>
+  </div>
+  <style>
+    ul li {
+      padding: 8px;
+      border: 1px solid #0288d1;
+      margin: 5px;
+    }
+
+    .activeli {
+      background-color: #0288d1;
+    }
+
+    .activeli a {
+      color: white;
+    }
+  </style>
   <script>
     // Get a reference to the progress bar, wrapper & status label
     var progress = document.getElementById("progress");
@@ -156,6 +205,7 @@
 
         if (percent_complete == 100) {
           loading_btn.classList.add("d-none");
+          cancel_btn.classList.add("d-none");
           processing_btn.classList.remove("d-none");
         }
 
@@ -247,6 +297,102 @@
 
       // Reset the input placeholder
       file_input_label.innerText = "Select file";
+
+    }
+    var total_pages;
+    var size;
+    function fetchReport() {
+      var request = new XMLHttpRequest();
+      request.responseType = "json";
+
+      request.addEventListener("load", function (e) {
+
+        if (request.status == 200) {
+
+          var tableData = [];
+          var fetchTime;
+
+          if (request.response.items.length === 0) {
+            document.getElementById("empty_result").classList.remove("d-none");
+          }
+          else {
+            document.getElementById("empty_result").classList.add("d-none");
+            fetchTime = new Date();
+            console.log(fetchTime);
+            for (var i = 0; i < request.response.items.length; i++) {
+              tableData.push(request.response.items[i]);
+            }
+            total_pages = Math.floor(request.response.total / request.response.size);
+            size = request.response.size;
+            //  document.getElementById("totalData").innerHTML = `Showing ${(size*request.response.page)+1} to ${(size*request.response.page)+request.response.size} of ${request.response.total}   (Data Fetched on ${fetchTime})`
+            document.getElementById("totalData").innerHTML = `Data Fetched on ${fetchTime}`
+            createTable(tableData, fetchTime);
+            document.getElementsByTagName('li')[0].classList.add("activeli");
+          }
+        }
+        else {
+          show_alert(`Error fetching result`, "danger");
+        }
+      });
+
+      request.open("get", "/report?page=0");
+      request.send();
+
+    }
+
+    function createTable(items, date) {
+      resultDiv = document.getElementById("resultDiv");
+      resultDiv.classList.remove("d-none");
+
+      resultTable = document.getElementById("resultTable");
+
+      for (var i = 0; i < items.length; i++) {
+        resultTable.innerHTML += `
+                        <tr>
+                          <td>${items[i].name}</td>
+                          <td>${items[i].no_of_products}</td>
+                        </tr>
+                        `;
+      }
+      document.getElementsByClassName("pagination")[0].innerHTML = "";
+      for (var i = 0; i < total_pages; i++) {
+        document.getElementsByClassName("pagination")[0].innerHTML += `<li onclick="fetchPageResult(${i});"><a href="#">${i + 1}</a></li>`
+      }
+    }
+
+    function fetchPageResult(page) {
+      var request = new XMLHttpRequest();
+      request.responseType = "json";
+
+      request.addEventListener("load", function (e) {
+
+        if (request.status == 200) {
+
+          var tableData = [];
+          var fetchTime;
+
+          fetchTime = new Date();
+          console.log(fetchTime);
+
+          for (var i = 0; i < request.response.items.length; i++) {
+            tableData.push(request.response.items[i]);
+          }
+          //  document.getElementById("totalData").innerHTML = `Showing ${(size*request.response.page)+1} to ${(size*request.response.page)+request.response.size} of ${request.response.total}   (Data fetched on ${fetchTime})`
+          document.getElementById("totalData").innerHTML = `Data Fetched on ${fetchTime}`
+          createTable(tableData, fetchTime);
+
+          for (var i = 0; i < document.getElementsByTagName('li').length; i++) {
+            document.getElementsByTagName('li')[page].classList.remove("activeli");
+          }
+          document.getElementsByTagName('li')[page].classList.add("activeli");
+        }
+        else {
+          show_alert(`Error fetching result`, "danger");
+        }
+      });
+
+      request.open("get", "/report?page=" + page);
+      request.send();
 
     }
   </script>

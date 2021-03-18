@@ -3,10 +3,7 @@ import sys
 sys.path.insert(1, '../')
 import models
 import psycopg2
-
-
-
-
+import numpy as np
 
 class Product(object):
     """
@@ -57,7 +54,7 @@ class Product(object):
 
 
     def create_report_table(self):
-        print(self.session)
+        # print(self.session)
         with self.session.cursor() as cursor:
             try:
                 cursor.execute(self.reporting_table_query)
@@ -107,8 +104,9 @@ class Product(object):
     def update_row(self, row):
         with self.session.cursor() as cursor:
             try:
+                
                 cursor.execute(f"""
-                                UPDATE product
+                                UPDATE product_{row[3]}
                                 SET name = '{row[0]}',
                                     description = '{row[2]}'
                                 WHERE sku = '{row[1]}' AND partition_code = {row[3]};
@@ -141,18 +139,17 @@ class Product(object):
         with self.session.cursor() as cursor:
             try:
                 cursor.execute(f"""
-                                INSERT INTO product VALUES ('{row[0]}', '{row[1]}', '{row[2]}', {row[3]})
+                                INSERT INTO product_{row[3]} VALUES ('{row[0]}', '{row[1]}', '{row[2]}', {row[3]})
                 """)
                 self.session.commit()
-                # print("INFO: [PRODUCT] - Inserted")
             except (psycopg2.errors.UndefinedTable) as e:
-                # print("ERROR: [PRODUCT] - Table does not Exist")
+                print("ERROR: [PRODUCT] - Table does not Exist")
                 self.session.rollback()
             except (psycopg2.errors.UndefinedColumn,) as e :
-                # print("ERROR: [PRODUCT] - Undefined Column")
+                print("ERROR: [PRODUCT] - Undefined Column")
                 self.session.rollback()
             except (psycopg2.errors.CheckViolation,) as e :
-                # print("ERROR: [PRODUCT] - Violation 'create partition'")
+                print("ERROR: [PRODUCT] - Violation 'create partition'")
                 self.session.rollback()
             except (psycopg2.errors.UniqueViolation,) as e:
                 self.session.rollback()

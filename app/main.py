@@ -1,10 +1,15 @@
-from fastapi import FastAPI, File, UploadFile, Request, Form
+from fastapi import FastAPI, File, UploadFile, Request, Form, Depends
 from fastapi.templating import Jinja2Templates
 import aiofiles
 import asyncio
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Any, Iterator
 from pathlib import Path
 from pydantic import BaseModel
+from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from fastapi_pagination import Page, add_pagination
+from fastapi_pagination.ext.sqlalchemy import paginate
+from sqlalchemy.orm import Session, sessionmaker
 # from utils.data_ingestion import save_upload_file_tmp
 from strgen import StringGenerator as SG
 from timeit import default_timer as timer
@@ -50,8 +55,10 @@ async def upload_file(file: UploadFile = File(...)):
     print(f"[INFO] [I/O OPS] took time {end - start} seconds.")
     # temp_file = _save_file_to_disk(file, path='temp', save_as='temp')
     start = timer()
+    # print("Started Ingestion")
     ingestion_resp = data_ingestion.ingest_data(f'./temp/{filename}.csv')
-    start = timer()
+    # print("Complete Ingestion")
+    end = timer()
     os.remove(f'./temp/{filename}.csv')
     if ingestion_resp:
         return {"status": "OK","message":f"Data Ingested with {end - start} seconds :)"}
@@ -59,18 +66,46 @@ async def upload_file(file: UploadFile = File(...)):
         return {"status": "ALERT","message":"Uploaded but Data Ingestion Terminated :/"}
 
 
+# sqlalchemy setup for pagination
+engine = create_engine("postgresql+psycopg2://postgres:postgres@localhost:5432/postman")
+SessionLocal = sessionmaker(autocommit=True, autoflush=True, bind=engine)
+Base = declarative_base(bind=engine)
 
-@app.get('/reports')
-def get_users():
+class Report(Base):
+    __tablename__ = 'product_report'
+    __table_args__ = {'extend_existing': True}
+    name = Column('name', String, primary_key = True)
+    no_of_products = Column("no. of products", Integer)
+
+class ReportOut(BaseModel):
+    name : str
+    no_of_products : int
+
+    class Config:
+        orm_mode = True
+
+def get_db() -> Iterator[Session]:
+    db = SessionLocal()
     try:
-        obj = models.ConnectDB().initialise()
-        with obj.cursor() as cursor:
-            cursor.execute("""SELECT * FROM product_report""")
-            obj.commit()
-        obj.terminate()
-        return {"status":"OK", "data":product.generate_report()}
-    except Exception as e:
-        return {"status": "ALERT","message":"Still Working on it"}
+        yield db
+    finally:
+        db.close()
+
+@app.get('/report', response_model = Page[ReportOut])
+def get_users(db: Session = Depends(get_db)) -> Any:
+    return paginate(db.query(Report))
+
+add_pagination(app)
+
+    # try:
+    #     obj = models.ConnectDB().initialise()
+    #     with obj.cursor() as cursor:
+    #         cursor.execute("""SELECT * FROM product_report""")
+    #         obj.commit()
+    #     obj.terminate()
+    #     return {"status":"OK", "data":product.generate_report()}
+    # except Exception as e:
+    #     return {"status": "ALERT","message":"Still Working on it"}
 
 
 
