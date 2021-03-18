@@ -1,5 +1,16 @@
 # postman-assignment
 
+### Improvements; What is new?
+1. Airflow Orchestration issue with 2.0 fixed [ in latest 2.0 release lot of new features has been introduced (eg TaskFlow APIs)]
+2. Disabled cancel uploading button after 100% upload of file [Bug]
+3. Aggrigation table getting populated each and very 2 minutes using airflow [ for this use case, on production this can be hourly or daily etc]
+4. Created web UI for aggregated table with pagination
+
+### Pending
+* airflow containerisation [python 3.8 compactability] [Issue] [trying]
+* puckle docker image for arflow not compactable with airflow 2.0 version [Issue]
+
+
 #### Execution
 
 > ./start_script.sh
