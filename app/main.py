@@ -7,7 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from fastapi_pagination import LimitOffsetPage, Page, add_pagination
+from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session, sessionmaker
 # from utils.data_ingestion import save_upload_file_tmp
@@ -55,9 +55,9 @@ async def upload_file(file: UploadFile = File(...)):
     print(f"[INFO] [I/O OPS] took time {end - start} seconds.")
     # temp_file = _save_file_to_disk(file, path='temp', save_as='temp')
     start = timer()
-    print("Started Ingestion")
+    # print("Started Ingestion")
     ingestion_resp = data_ingestion.ingest_data(f'./temp/{filename}.csv')
-    print("Complete Ingestion")
+    # print("Complete Ingestion")
     end = timer()
     os.remove(f'./temp/{filename}.csv')
     if ingestion_resp:

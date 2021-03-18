@@ -104,8 +104,9 @@ class Product(object):
     def update_row(self, row):
         with self.session.cursor() as cursor:
             try:
+                
                 cursor.execute(f"""
-                                UPDATE product
+                                UPDATE product_{row[3]}
                                 SET name = '{row[0]}',
                                     description = '{row[2]}'
                                 WHERE sku = '{row[1]}' AND partition_code = {row[3]};
@@ -138,7 +139,7 @@ class Product(object):
         with self.session.cursor() as cursor:
             try:
                 cursor.execute(f"""
-                                INSERT INTO product VALUES ('{row[0]}', '{row[1]}', '{row[2]}', {row[3]})
+                                INSERT INTO product_{row[3]} VALUES ('{row[0]}', '{row[1]}', '{row[2]}', {row[3]})
                 """)
                 self.session.commit()
             except (psycopg2.errors.UndefinedTable) as e:
