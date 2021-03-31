@@ -22,7 +22,7 @@
 Containerisation is not successful yet due to
 1. Public Issue in Airflow official Docker Image
 2. Used ***puckel/docker-airflow*** for airflow service
-3. ***aggregated table*** is implemented by airflow job scheduler [NOT Completed Since bug exists]
+3. ***aggregated table*** is implemented by airflow job scheduler
 4. Multiple Data Ingestion possible - FastAPI server hosted with Browser UI
 
 #### Execution on local device
